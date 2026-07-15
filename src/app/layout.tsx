@@ -9,7 +9,7 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "ใบสั่ง - แอปหารเงิน",
+  title: "ใบสั่ง (Baisang)",
   description: "แอปหารเงินที่สวยงาม ใช้งานง่าย คัดลอกเลขบัญชีได้ทันที",
 };
 
