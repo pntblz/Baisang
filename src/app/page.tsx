@@ -86,9 +86,12 @@ export default function Home() {
     <div className="flex flex-col min-h-screen p-6 relative">
       {/* Header */}
       <header className="flex justify-between items-center py-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">ใบสั่ง (Baisang)</h1>
-          <p className="text-muted-foreground text-sm mt-1">ใครยังไม่จ่าย กรุณาชำระด่วน!</p>
+        <div className="flex items-center gap-3">
+          <img src="https://i.ibb.co/27smhg2b/Baisang-Logo.png" alt="Baisang Logo" className="h-12 w-auto object-contain" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-primary leading-none">ใบสั่ง</h1>
+            <p className="text-muted-foreground text-xs mt-1">ใครยังไม่จ่าย ชำระด่วน!</p>
+          </div>
         </div>
         {session ? (
           <div className="flex items-center gap-3">

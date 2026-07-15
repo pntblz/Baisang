@@ -79,6 +79,10 @@ export default function PartyRoom() {
           element: '#tab-summary', 
           popover: { title: '3. สรุปบิล', description: 'เมื่อครบแล้ว มาดูสรุปยอดว่าใครต้องโอนให้ใคร พร้อมแนบบัญชีรับเงินได้เลย', side: "bottom", align: 'center' },
           onHighlightStarted: () => setActiveTab("summary")
+        },
+        { 
+          element: '#tour-save-status', 
+          popover: { title: 'บันทึกอัตโนมัติ ☁️', description: 'สบายใจได้เลย! ระบบนี้จะเซฟข้อมูลทุกอย่างให้อัตโนมัติทันทีที่มีการเปลี่ยนแปลง ไม่ต้องคอยกดเซฟเองครับ', side: "bottom", align: 'end' }
         }
       ]
     });
@@ -318,8 +322,9 @@ export default function PartyRoom() {
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 md:gap-2">
-              <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-muted-foreground hover:bg-muted" onClick={() => router.push('/')}>
-                <Home className="w-5 h-5" />
+              <Button variant="ghost" size="sm" className="shrink-0 h-9 px-2 text-muted-foreground hover:bg-muted font-bold flex items-center gap-1" onClick={() => router.push('/')}>
+                <Home className="w-4 h-4" />
+                <span className="text-xs">หน้าหลัก</span>
               </Button>
               <div className="w-7 h-7 rounded-full bg-primary/10 hidden md:flex items-center justify-center shrink-0">
                 <Wallet className="w-3.5 h-3.5 text-primary" />
@@ -341,7 +346,7 @@ export default function PartyRoom() {
             </div>
           </div>
           <div className="text-right shrink-0 mt-1 flex flex-col items-end">
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 mb-1.5" id="tour-save-status">
               {saveStatus === "saving" && <span className="text-[10px] text-muted-foreground animate-pulse">กำลังบันทึก... ☁️</span>}
               {saveStatus === "saved" && <span className="text-[10px] text-green-600 font-bold">บันทึกแล้ว ✔️</span>}
               <Button variant="default" size="sm" onClick={startTour} className="text-xs font-bold h-7 px-3 rounded-full shadow-sm"><HelpCircle className="w-3.5 h-3.5 mr-1"/> วิธีใช้</Button>
