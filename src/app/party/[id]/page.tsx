@@ -43,6 +43,7 @@ export default function PartyRoom() {
   const [isLoaded, setIsLoaded] = useState(false);
   const clientId = useMemo(() => Math.random().toString(36).substring(2, 15), []);
   const isUpdatingFromRealtime = useRef(false);
+  const [hostId, setHostId] = useState<string | null>(null);
 
   // Input states
   const [newMemberName, setNewMemberName] = useState("");
@@ -92,7 +93,17 @@ export default function PartyRoom() {
     let channel: any;
 
     const setup = async () => {
-      const { data, error } = await supabase.from('parties').select('data').eq('pin', pin).single();
+      const { data, error } = await supabase.from('parties').select('data, host_id').eq('pin', pin).single();
+      
+      let currentHostId = data?.host_id || null;
+
+      if (!data) {
+        // If room doesn't exist, we are creating it. Get current user's ID.
+        const { data: { session } } = await supabase.auth.getSession();
+        currentHostId = session?.user?.id || null;
+      }
+      setHostId(currentHostId);
+
       if (data?.data) {
         isUpdatingFromRealtime.current = true;
         setPartyName(data.data.partyName || "");
@@ -138,10 +149,13 @@ export default function PartyRoom() {
     }
     
     const saveToSupabase = async () => {
-      await supabase.from('parties').upsert({
+      const payload: any = {
         pin,
         data: { partyName, members, items, paymentStatuses, lastUpdatedBy: clientId }
-      }, { onConflict: 'pin' });
+      };
+      if (hostId) payload.host_id = hostId;
+
+      await supabase.from('parties').upsert(payload, { onConflict: 'pin' });
     };
 
     // Debounce save to prevent spamming database
