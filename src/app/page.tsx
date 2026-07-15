@@ -20,7 +20,16 @@ export default function Home() {
       if (data) setHistory(data);
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Debug URL hash for errors
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && hash.includes('error=')) {
+        alert("🚨 ระบบตรวจพบ Error: " + decodeURIComponent(hash));
+      }
+    }
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) alert("🚨 GetSession Error: " + error.message);
       setSession(session);
       if (session?.user?.id) fetchHistory(session.user.id);
     });
