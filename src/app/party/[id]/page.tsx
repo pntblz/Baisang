@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Copy, Plus, Users, Receipt, CreditCard, CheckCircle2, Upload, Trash2, Check, ChevronDown, Wallet, HelpCircle, Home } from "lucide-react";
+import { Copy, Plus, Users, Receipt, CreditCard, CheckCircle2, Upload, Trash2, Check, ChevronDown, ChevronLeft, Wallet, HelpCircle, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
@@ -81,8 +81,7 @@ export default function PartyRoom() {
           onHighlightStarted: () => setActiveTab("summary")
         },
         { 
-          element: '#tour-save-status', 
-          popover: { title: 'บันทึกอัตโนมัติ ☁️', description: 'สบายใจได้เลย! ระบบนี้จะเซฟข้อมูลทุกอย่างให้อัตโนมัติทันทีที่มีการเปลี่ยนแปลง ไม่ต้องคอยกดเซฟเองครับ', side: "bottom", align: 'end' }
+          popover: { title: 'บันทึกอัตโนมัติ ☁️', description: 'สบายใจได้เลย! ระบบนี้จะเซฟข้อมูลทุกอย่างให้อัตโนมัติทันทีที่มีการเปลี่ยนแปลง ไม่ต้องคอยกดเซฟเองครับ' }
         }
       ]
     });
@@ -318,42 +317,43 @@ export default function PartyRoom() {
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
       {/* Top Header */}
-      <header className="bg-card px-4 md:px-6 py-4 border-b border-border sticky top-0 z-10 shadow-sm">
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 md:gap-2">
-              <Button variant="ghost" size="sm" className="shrink-0 h-9 px-2 text-muted-foreground hover:bg-muted font-bold flex items-center gap-1" onClick={() => router.push('/')}>
-                <Home className="w-4 h-4" />
-                <span className="text-xs">หน้าหลัก</span>
-              </Button>
-              <div className="w-7 h-7 rounded-full bg-primary/10 hidden md:flex items-center justify-center shrink-0">
-                <Wallet className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <input 
+      <header className="bg-card px-4 md:px-6 py-4 border-b border-border sticky top-0 z-10 shadow-sm flex flex-col gap-3">
+        {/* Top row: Navigation & Actions */}
+        <div className="flex justify-between items-center w-full">
+           <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:bg-muted font-bold flex items-center gap-1 -ml-2" onClick={() => router.push('/')}>
+             <ChevronLeft className="w-4 h-4" />
+             <span className="text-xs">กลับหน้าหลัก</span>
+           </Button>
+           <div className="flex items-center gap-2" id="tour-save-status">
+             {saveStatus === "saving" && <span className="text-[10px] text-muted-foreground animate-pulse">กำลังบันทึก... ☁️</span>}
+             {saveStatus === "saved" && <span className="text-[10px] text-green-600 font-bold">บันทึกแล้ว ✔️</span>}
+             <Button variant="outline" size="sm" onClick={startTour} className="text-xs font-bold h-7 px-3 rounded-full shadow-sm"><HelpCircle className="w-3.5 h-3.5 mr-1"/> วิธีใช้</Button>
+           </div>
+        </div>
+
+        {/* Second row: Party Name & Total */}
+        <div className="flex justify-between items-end gap-2">
+           <div className="flex-1 min-w-0">
+             <input 
                 value={partyName} 
                 onChange={(e) => setPartyName(e.target.value)} 
                 placeholder="ตั้งชื่อปาร์ตี้ที่นี่..."
-                className="bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 py-1 text-lg md:text-xl font-bold w-full placeholder:text-muted-foreground/60 placeholder:font-semibold truncate"
-              />
-            </div>
-            <div className="mt-2 ml-10 flex items-center gap-2" id="tour-room-pin">
-              <p className="text-xs font-semibold text-muted-foreground">รหัสห้อง:</p>
-              <span className="font-mono font-bold bg-primary/10 text-primary px-3 py-1 text-sm md:text-base rounded-md tracking-wider border border-primary/20">{pin}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20 relative" onClick={handleCopyPin}>
-                {copiedPin ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                {copiedPin && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">คัดลอกแล้ว</span>}
-              </Button>
-            </div>
-          </div>
-          <div className="text-right shrink-0 mt-1 flex flex-col items-end">
-            <div className="flex items-center gap-2 mb-1.5" id="tour-save-status">
-              {saveStatus === "saving" && <span className="text-[10px] text-muted-foreground animate-pulse">กำลังบันทึก... ☁️</span>}
-              {saveStatus === "saved" && <span className="text-[10px] text-green-600 font-bold">บันทึกแล้ว ✔️</span>}
-              <Button variant="default" size="sm" onClick={startTour} className="text-xs font-bold h-7 px-3 rounded-full shadow-sm"><HelpCircle className="w-3.5 h-3.5 mr-1"/> วิธีใช้</Button>
-            </div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ยอดรวม (บาท)</p>
-            <p className="font-black text-xl text-primary leading-tight">฿{grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-          </div>
+                className="bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 py-1 text-xl md:text-2xl font-bold w-full placeholder:text-muted-foreground/60 placeholder:font-semibold truncate -ml-1"
+             />
+             <div className="mt-1 flex items-center gap-2" id="tour-room-pin">
+               <p className="text-xs font-semibold text-muted-foreground">รหัสห้อง:</p>
+               <span className="font-mono font-bold bg-primary/10 text-primary px-3 py-1 text-sm rounded-md tracking-wider border border-primary/20">{pin}</span>
+               <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20 relative" onClick={handleCopyPin}>
+                 {copiedPin ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                 {copiedPin && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">คัดลอกแล้ว</span>}
+               </Button>
+             </div>
+           </div>
+           
+           <div className="text-right shrink-0 flex flex-col items-end">
+             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ยอดรวม (บาท)</p>
+             <p className="font-black text-2xl text-primary leading-tight">฿{grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+           </div>
         </div>
       </header>
 

@@ -11,6 +11,13 @@ const notoSansThai = Noto_Sans_Thai({
 export const metadata: Metadata = {
   title: "ใบสั่ง (Baisang)",
   description: "แอปหารเงินที่สวยงาม ใช้งานง่าย คัดลอกเลขบัญชีได้ทันที",
+  icons: {
+    icon: "https://i.ibb.co/27smhg2b/Baisang-Logo.png",
+    apple: "https://i.ibb.co/27smhg2b/Baisang-Logo.png",
+  },
+  openGraph: {
+    images: ["https://i.ibb.co/27smhg2b/Baisang-Logo.png"],
+  }
 };
 
 export default function RootLayout({
