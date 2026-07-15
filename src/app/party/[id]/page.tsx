@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,6 +38,11 @@ export default function PartyRoom() {
   const [members, setMembers] = useState<Member[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatus[]>([]);
+
+  // Supabase Realtime State
+  const [isLoaded, setIsLoaded] = useState(false);
+  const clientId = useMemo(() => Math.random().toString(36).substring(2, 15), []);
+  const isUpdatingFromRealtime = useRef(false);
 
   // Input states
   const [newMemberName, setNewMemberName] = useState("");
@@ -77,9 +83,71 @@ export default function PartyRoom() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem("hasSeenTour")) {
-      setTimeout(startTour, 1000);
+      setTimeout(startTour, 2000);
     }
   }, []);
+
+  // 1. Initial Load & Subscribe to Supabase
+  useEffect(() => {
+    let channel: any;
+
+    const setup = async () => {
+      const { data, error } = await supabase.from('parties').select('data').eq('pin', pin).single();
+      if (data?.data) {
+        isUpdatingFromRealtime.current = true;
+        setPartyName(data.data.partyName || "");
+        setMembers(data.data.members || []);
+        setItems(data.data.items || []);
+        setPaymentStatuses(data.data.paymentStatuses || []);
+      }
+      setIsLoaded(true);
+
+      channel = supabase.channel(`room:${pin}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'parties', filter: `pin=eq.${pin}` },
+          (payload: any) => {
+            const newData = payload.new?.data;
+            if (newData && newData.lastUpdatedBy !== clientId) {
+              isUpdatingFromRealtime.current = true;
+              setPartyName(newData.partyName || "");
+              setMembers(newData.members || []);
+              setItems(newData.items || []);
+              setPaymentStatuses(newData.paymentStatuses || []);
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    setup();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [pin, clientId]);
+
+  // 2. Auto-save to Supabase on state changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    // Ignore updates that came from Supabase Realtime
+    if (isUpdatingFromRealtime.current) {
+      isUpdatingFromRealtime.current = false;
+      return;
+    }
+    
+    const saveToSupabase = async () => {
+      await supabase.from('parties').upsert({
+        pin,
+        data: { partyName, members, items, paymentStatuses, lastUpdatedBy: clientId }
+      }, { onConflict: 'pin' });
+    };
+
+    // Debounce save to prevent spamming database
+    const timer = setTimeout(saveToSupabase, 400);
+    return () => clearTimeout(timer);
+  }, [partyName, members, items, paymentStatuses, isLoaded, pin, clientId]);
 
   const addMember = (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,6 +264,17 @@ export default function PartyRoom() {
   }, [items]);
 
   const grandTotal = items.reduce((acc, item) => acc + item.price, 0);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <div className="animate-pulse flex flex-col items-center">
+          <Wallet className="w-12 h-12 text-primary/30 mb-4 animate-bounce" />
+          <p className="text-muted-foreground font-bold">กำลังเชื่อมต่อห้อง...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
