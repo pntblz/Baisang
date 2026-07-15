@@ -103,8 +103,15 @@ export default function PartyRoom() {
 
       if (!data) {
         // If room doesn't exist, we are creating it. Get current user's ID.
-        const { data: { session } } = await supabase.auth.getSession();
-        currentHostId = session?.user?.id || null;
+        try {
+          const res = await fetch('/api/auth/me');
+          if (res.ok) {
+            const { user } = await res.json();
+            currentHostId = user?.id || null;
+          }
+        } catch (err) {
+          console.error("Failed to fetch user ID", err);
+        }
       }
       setHostId(currentHostId);
 

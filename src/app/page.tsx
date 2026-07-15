@@ -28,34 +28,37 @@ export default function Home() {
       }
     }
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) alert("🚨 GetSession Error: " + error.message);
-      setSession(session);
-      if (session?.user?.id) fetchHistory(session.user.id);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user?.id) {
-        fetchHistory(session.user.id);
-      } else {
-        setHistory([]);
+    const loadSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const { user } = await res.json();
+          setSession(user ? { user: { user_metadata: user, id: user.id } } : null);
+          if (user?.id) fetchHistory(user.id);
+        }
+      } catch (err) {
+        console.error("Failed to load session", err);
       }
-    });
-
-    return () => subscription.unsubscribe();
+    };
+    loadSession();
   }, []);
 
-  const handleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'custom:line' as any,
-    });
+  const handleLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_LINE_CLIENT_ID;
+    if (!clientId) {
+      alert("กรุณาตั้งค่า NEXT_PUBLIC_LINE_CLIENT_ID ใน Environment Variables");
+      return;
+    }
+    const redirectUri = `${window.location.origin}/api/auth/callback`;
+    const state = Math.random().toString(36).substring(7);
+    const lineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=profile%20openid`;
+    window.location.href = lineLoginUrl;
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setSession(null);
+    setHistory([]);
   };
 
   const handleJoin = (e: React.FormEvent) => {
