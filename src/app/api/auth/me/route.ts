@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 export async function GET() {
-  const sessionCookie = cookies().get('line_session');
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('line_session');
 
   if (!sessionCookie || !sessionCookie.value) {
     return NextResponse.json({ user: null });

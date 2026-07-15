@@ -59,7 +59,8 @@ export async function GET(request: Request) {
       avatar_url: profileData.pictureUrl,
     };
 
-    cookies().set('line_session', JSON.stringify(sessionData), {
+    const cookieStore = await cookies();
+    cookieStore.set('line_session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
