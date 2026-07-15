@@ -20,13 +20,7 @@ export default function Home() {
       if (data) setHistory(data);
     };
 
-    // Debug URL hash for errors
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      if (hash && hash.includes('error=')) {
-        alert("🚨 ระบบตรวจพบ Error: " + decodeURIComponent(hash));
-      }
-    }
+
 
     const loadSession = async () => {
       try {
