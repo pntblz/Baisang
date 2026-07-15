@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Copy, Plus, Users, Receipt, CreditCard, CheckCircle2, Upload, Trash2, Check, ChevronDown, Wallet, HelpCircle } from "lucide-react";
+import { Copy, Plus, Users, Receipt, CreditCard, CheckCircle2, Upload, Trash2, Check, ChevronDown, Wallet, HelpCircle, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
@@ -29,6 +29,7 @@ const COLORS = [
 
 export default function PartyRoom() {
   const params = useParams();
+  const router = useRouter();
   const pin = params.id as string;
 
   const [activeTab, setActiveTab] = useState<"items" | "members" | "summary">("items");
@@ -44,6 +45,9 @@ export default function PartyRoom() {
   const clientId = useMemo(() => Math.random().toString(36).substring(2, 15), []);
   const isUpdatingFromRealtime = useRef(false);
   const [hostId, setHostId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [copiedPin, setCopiedPin] = useState(false);
+  const [copiedBank, setCopiedBank] = useState<string | null>(null);
 
   // Input states
   const [newMemberName, setNewMemberName] = useState("");
@@ -149,6 +153,7 @@ export default function PartyRoom() {
     }
     
     const saveToSupabase = async () => {
+      setSaveStatus("saving");
       const payload: any = {
         pin,
         data: { partyName, members, items, paymentStatuses, lastUpdatedBy: clientId }
@@ -156,12 +161,14 @@ export default function PartyRoom() {
       if (hostId) payload.host_id = hostId;
 
       await supabase.from('parties').upsert(payload, { onConflict: 'pin' });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
     };
 
     // Debounce save to prevent spamming database
     const timer = setTimeout(saveToSupabase, 400);
     return () => clearTimeout(timer);
-  }, [partyName, members, items, paymentStatuses, isLoaded, pin, clientId]);
+  }, [partyName, members, items, paymentStatuses, isLoaded, pin, clientId, hostId]);
 
   const addMember = (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,9 +254,16 @@ export default function PartyRoom() {
     return paymentStatuses.find(p => p.owerId === owerId && p.payeeId === payeeId)?.isPaid || false;
   };
 
-  const copyToClipboard = (text: string) => {
+  const handleCopyPin = () => {
+    navigator.clipboard.writeText(pin);
+    setCopiedPin(true);
+    setTimeout(() => setCopiedPin(false), 2000);
+  };
+
+  const handleCopyBank = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    alert("คัดลอกรหัสแล้ว!"); 
+    setCopiedBank(id);
+    setTimeout(() => setCopiedBank(null), 2000);
   };
 
   // Calculations
@@ -296,9 +310,12 @@ export default function PartyRoom() {
       <header className="bg-card px-4 md:px-6 py-4 border-b border-border sticky top-0 z-10 shadow-sm">
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Wallet className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-1 md:gap-2">
+              <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-muted-foreground hover:bg-muted" onClick={() => router.push('/')}>
+                <Home className="w-5 h-5" />
+              </Button>
+              <div className="w-7 h-7 rounded-full bg-primary/10 hidden md:flex items-center justify-center shrink-0">
+                <Wallet className="w-3.5 h-3.5 text-primary" />
               </div>
               <input 
                 value={partyName} 
@@ -310,13 +327,18 @@ export default function PartyRoom() {
             <div className="mt-2 ml-10 flex items-center gap-2" id="tour-room-pin">
               <p className="text-xs font-semibold text-muted-foreground">รหัสห้อง:</p>
               <span className="font-mono font-bold bg-primary/10 text-primary px-3 py-1 text-sm md:text-base rounded-md tracking-wider border border-primary/20">{pin}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20" onClick={() => copyToClipboard(pin)}>
-                <Copy className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20 relative" onClick={handleCopyPin}>
+                {copiedPin ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copiedPin && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">คัดลอกแล้ว</span>}
               </Button>
             </div>
           </div>
           <div className="text-right shrink-0 mt-1 flex flex-col items-end">
-            <Button variant="default" size="sm" onClick={startTour} className="text-xs font-bold mb-1.5 h-7 px-3 rounded-full shadow-sm"><HelpCircle className="w-3.5 h-3.5 mr-1"/> วิธีใช้</Button>
+            <div className="flex items-center gap-2 mb-1.5">
+              {saveStatus === "saving" && <span className="text-[10px] text-muted-foreground animate-pulse">กำลังบันทึก... ☁️</span>}
+              {saveStatus === "saved" && <span className="text-[10px] text-green-600 font-bold">บันทึกแล้ว ✔️</span>}
+              <Button variant="default" size="sm" onClick={startTour} className="text-xs font-bold h-7 px-3 rounded-full shadow-sm"><HelpCircle className="w-3.5 h-3.5 mr-1"/> วิธีใช้</Button>
+            </div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ยอดรวม (บาท)</p>
             <p className="font-black text-xl text-primary leading-tight">฿{grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
           </div>
@@ -634,8 +656,9 @@ export default function PartyRoom() {
                                       <p className="text-sm font-bold text-slate-800 truncate">{payee.bankDetails.accountName}</p>
                                       <p className="font-mono text-base font-black tracking-wider text-slate-700 mt-1">{payee.bankDetails.accountNumber}</p>
                                     </div>
-                                    <Button size="icon" variant="outline" className="shrink-0 h-10 w-10 text-primary hover:bg-primary hover:text-white transition-colors rounded-full border-slate-300" onClick={() => copyToClipboard(payee.bankDetails!.accountNumber)}>
-                                      <Copy className="w-4 h-4" />
+                                    <Button size="icon" variant="outline" className={cn("shrink-0 h-10 w-10 transition-colors rounded-full relative", copiedBank === payeeId ? "border-green-500 text-green-500" : "border-slate-300 text-primary hover:bg-primary hover:text-white")} onClick={() => handleCopyBank(payee.bankDetails!.accountNumber, payeeId)}>
+                                      {copiedBank === payeeId ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                      {copiedBank === payeeId && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">คัดลอกแล้ว</span>}
                                     </Button>
                                   </div>
                                 )}
