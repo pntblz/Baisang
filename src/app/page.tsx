@@ -186,8 +186,9 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="text-center text-sm text-muted-foreground">
-            <p>ล็อกอินด้วย LINE เพื่อดูประวัติการหารเงินของคุณ</p>
+          <div className="text-center text-sm text-muted-foreground bg-white/50 p-4 rounded-xl border border-dashed shadow-sm">
+            <p className="font-semibold text-slate-700 mb-1">ล็อกอินด้วย LINE เพื่อดูประวัติการหารเงินของคุณ</p>
+            <p className="text-xs">⚠️ คุณสามารถใช้งานโดยไม่ล็อกอินได้ แต่ถ้าลืมรหัสห้องจะไม่สามารถกลับมาดูข้อมูลได้อีก</p>
           </div>
         )}
       </div>
